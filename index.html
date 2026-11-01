@@ -32,9 +32,9 @@ img{max-width:100%;display:block}
 .en{font-family:var(--en);direction:ltr;unicode-bidi:isolate}
 
 /* nav — Apple-style glass */
-nav{position:sticky;top:0;z-index:50;height:52px;background:rgba(251,251,253,.72);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(0,0,0,.06)}
+nav{position:sticky;top:0;z-index:50;height:62px;background:rgba(251,251,253,.72);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(0,0,0,.06)}
 nav .wrap{height:100%;display:flex;align-items:center;justify-content:space-between}
-nav .logo svg{height:20px;width:auto}
+nav .logo{display:flex;align-items:center;gap:10px;direction:ltr}nav .logo svg{height:26px!important;width:auto}nav .logo .tech{font:600 12px var(--en);letter-spacing:.35em;color:var(--blue);padding-top:4px}
 nav ul{display:flex;gap:30px;list-style:none;margin:0;padding:0;font-size:13.5px;color:#424245}
 nav ul a:hover{color:var(--ink)}
 .pill{background:var(--blue);color:#fff;font-size:13px;font-weight:500;padding:6px 14px;border-radius:999px}
@@ -160,7 +160,7 @@ section{padding:130px 0}
 .light .work .go{color:var(--blue2)}
 .gallery{display:flex;gap:16px;justify-content:center;align-items:flex-end}
 .gallery img{border-radius:26px;box-shadow:0 30px 70px rgba(0,0,0,.5)}
-.gallery .icon{width:22%;border-radius:22%;align-self:center}
+.gallery .icon{width:26%;border-radius:22%;align-self:center;background:#111;border:1px solid #2a2a2a;padding:4px;box-shadow:0 20px 50px rgba(255,255,255,.06)}
 .gallery .shot{width:36%}
 .gallery .shot.up{transform:translateY(-34px)}
 .aura-vis{position:relative}
@@ -223,7 +223,7 @@ footer a:hover{color:var(--ink)}
 
 <nav>
   <div class="wrap">
-    <a class="logo" href="#" aria-label="Rakaz Tech"><svg fill="#1d1d1f" viewBox="30 22 492 132"><use href="#wm"/></svg></a>
+    <a class="logo" href="#" aria-label="Rakaz Tech"><svg viewBox="30 22 492 132" style="height:26px;width:auto;display:block"><g fill="#0B1A3A"><path d="M40 30h46c22 0 36 13 36 32 0 15-8 26-22 30l26 28H99L76 95H62v25H40zM62 50v26h22c10 0 16-5 16-13s-6-13-16-13z"/><path d="M168 30h22l40 90h-24l-27-64-27 64h-24z"/><path d="M246 30h22v38l36-38h28l-40 41 43 49h-29l-38-44v44h-22z"/><path d="M372 30h22l40 90h-24l-27-64-27 64h-24z"/><path d="M440 30h72v18l-46 52h46v20h-74v-18l46-52h-44z"/></g><rect x="374" y="88" width="18" height="18" rx="2" fill="#2D7CFF"/></svg><span class="tech">TECH</span></a>
     <ul><li><a href="#services">خدماتنا</a></li><li><a href="#work">أعمالنا</a></li><li><a href="#process">كيف نشتغل</a></li><li><a href="#why">ليش ركاز</a></li></ul>
     <a class="pill" href="#contact">تواصل معنا</a>
   </div>
@@ -233,7 +233,7 @@ footer a:hover{color:var(--ink)}
 <section class="hero" style="padding-bottom:0">
   <div class="wrap">
     <div class="eyebrow rv">ركاز تك</div>
-    <h1 class="rv">نبني أساس شغلك الرقمي.</h1>
+    <h1 class="rv">نبني أساس شغلك الرقمي</h1>
     <p class="rv">مواقع، متاجر، أنظمة، تطبيقات وسوشال ميديا، مصممة بدقة ومبنية لتكبر مع شغلك.</p>
     <div class="links rv"><a class="btn" href="#contact">ابدأ مشروعك</a><a href="#work">شوف أعمالنا ›</a></div>
   </div>
@@ -246,7 +246,7 @@ footer a:hover{color:var(--ink)}
 
 <section class="gray" id="services">
   <div class="wrap">
-    <div class="head rv"><div class="k">خدماتنا</div><h2>كل اللي يحتاجه شغلك.<br>بمكان واحد.</h2><p>من أول صفحة لين آخر سطر كود، نبني الحل على مقاس شغلك.</p></div>
+    <div class="head rv"><div class="k">خدماتنا</div><h2>كل اللي يحتاجه شغلك<br>بمكان واحد</h2><p>من أول صفحة لين آخر سطر كود، نبني الحل على مقاس شغلك.</p></div>
     <div class="bento">
       <div class="tile t-web rv">
         <h3>مواقع إلكترونية</h3><p>تصميم يعكس هويتك، سريع على كل الأجهزة، عربي وإنجليزي.</p>
@@ -291,7 +291,7 @@ footer a:hover{color:var(--ink)}
 
 <section class="dark" id="work">
   <div class="wrap">
-    <div class="head rv"><div class="k">من أعمالنا</div><h2>مشاريع حقيقية.<br>شغالة ومنشورة.</h2></div>
+    <div class="head rv"><div class="k">من أعمالنا</div><h2>مشاريع حقيقية<br>شغالة ومنشورة</h2></div>
     <div class="work rv">
       <div>
         <div class="k">تطبيق · App Store</div>
@@ -322,7 +322,7 @@ footer a:hover{color:var(--ink)}
 
 <section class="gray" id="process">
   <div class="wrap">
-    <div class="head rv"><div class="k">كيف نشتغل</div><h2>من الفكرة للإطلاق.</h2><p>خطوات واضحة، وتعرف وين وصل مشروعك بكل مرحلة.</p></div>
+    <div class="head rv"><div class="k">كيف نشتغل</div><h2>من الفكرة للإطلاق</h2><p>خطوات واضحة، وتعرف وين وصل مشروعك بكل مرحلة.</p></div>
     <div class="steps rv">
       <div class="step"><b>1</b><h3>نسمع فكرتك</h3><p>نفهم شغلك وهدفك ونحدد المطلوب.</p></div>
       <div class="step"><b>2</b><h3>نصمم ونعرض</h3><p>تشوف التصميم وتعدل قبل البناء.</p></div>
@@ -330,7 +330,7 @@ footer a:hover{color:var(--ink)}
       <div class="step"><b>4</b><h3>نطلق وندعمك</h3><p>ونظل معك بعد التسليم.</p></div>
     </div>
     <div style="margin-top:90px" class="rv">
-      <div class="head" style="margin-bottom:26px"><h2 style="font-size:clamp(26px,3.4vw,36px)">نشتغل بأحدث التقنيات.</h2></div>
+      <div class="head" style="margin-bottom:26px"><h2 style="font-size:clamp(26px,3.4vw,36px)">نشتغل بأحدث التقنيات</h2></div>
       <div class="marquee"><div class="track">
         <span>iOS · Swift</span><span>Android</span><span>React</span><span>Node.js</span><span>Shopify</span><span>Apple App Store</span><span>Google Play</span><span>Cloud Hosting</span><span>AI Automation</span><span>Payment Gateways</span><span>WhatsApp Integration</span><span>SEO</span><span>Instagram</span><span>TikTok</span>
         <span>iOS · Swift</span><span>Android</span><span>React</span><span>Node.js</span><span>Shopify</span><span>Apple App Store</span><span>Google Play</span><span>Cloud Hosting</span><span>AI Automation</span><span>Payment Gateways</span><span>WhatsApp Integration</span><span>SEO</span><span>Instagram</span><span>TikTok</span>
@@ -341,7 +341,7 @@ footer a:hover{color:var(--ink)}
 
 <section id="why">
   <div class="wrap">
-    <div class="head rv"><div class="k">ليش ركاز؟</div><h2>ركاز يعني الأساس.</h2><p>وإحنا نبني لك أساس رقمي متين يكبر مع شغلك.</p></div>
+    <div class="head rv"><div class="k">ليش ركاز؟</div><h2>ركاز يعني الأساس</h2><p>وإحنا نبني لك أساس رقمي متين يكبر مع شغلك.</p></div>
     <div class="why">
       <div class="rv"><h3>شركة كويتية</h3><p>نفهم سوقك وعملاءك ولغتهم.</p></div>
       <div class="rv"><h3>تواصل مباشر</h3><p>تكلمنا مباشرة بدون وسطاء.</p></div>
@@ -354,7 +354,7 @@ footer a:hover{color:var(--ink)}
 <section class="cta" id="contact">
   <div class="wrap">
     <div class="eyebrow rv" style="color:#5CC8FF">عندك فكرة؟</div>
-    <h2 class="rv">خلنا نبنيها مع بعض.</h2>
+    <h2 class="rv">خلنا نبنيها مع بعض</h2>
     <p class="rv">راسلنا ونرد عليك بأقرب وقت.</p>
     <div class="contact rv">
       <a class="main" href="https://instagram.com/rakaztech" target="_blank" rel="noopener"><svg><use href="#ig"/></svg><span class="en">@rakaztech</span></a>
