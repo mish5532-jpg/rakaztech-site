@@ -202,6 +202,17 @@ section{padding:130px 0}
 .contact a:hover{background:rgba(255,255,255,.08)}
 .contact a.main{background:var(--blue);border-color:var(--blue)}
 .contact svg{width:20px;height:20px}
+.book{max-width:620px;margin:40px auto 0;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:24px;padding:26px;text-align:right}
+.book .free{display:inline-block;background:#2D7CFF;color:#fff;font-size:13px;font-weight:600;padding:5px 12px;border-radius:999px;margin-bottom:12px}
+.book h3{margin:0 0 4px;font-size:24px}
+.book small{color:#a1a1a6;font-size:14px}
+.book form{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.book input,.book select,.book textarea{font:inherit;font-size:16px;color:#fff;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:12px 14px;width:100%;box-sizing:border-box}
+.book select option{color:#000}
+.book textarea{grid-column:1/-1;min-height:84px;resize:vertical}
+.book button{grid-column:1/-1;font:inherit;font-size:17px;font-weight:600;background:#2D7CFF;color:#fff;border:0;border-radius:999px;padding:14px;cursor:pointer}
+.book button:hover{background:#1f6ae6}
+@media(max-width:600px){.book form{grid-template-columns:1fr}}
 footer{background:var(--bg2);color:#6e6e73;font-size:13px;padding:26px 0}
 footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center}
 footer .soc{display:flex;gap:18px}
@@ -225,7 +236,7 @@ footer a:hover{color:var(--ink)}
   <div class="wrap">
     <a class="logo" href="#" aria-label="Rakaz Tech"><svg viewBox="30 22 492 132" style="height:26px;width:auto;display:block"><g fill="#0B1A3A"><path d="M40 30h46c22 0 36 13 36 32 0 15-8 26-22 30l26 28H99L76 95H62v25H40zM62 50v26h22c10 0 16-5 16-13s-6-13-16-13z"/><path d="M168 30h22l40 90h-24l-27-64-27 64h-24z"/><path d="M246 30h22v38l36-38h28l-40 41 43 49h-29l-38-44v44h-22z"/><path d="M372 30h22l40 90h-24l-27-64-27 64h-24z"/><path d="M440 30h72v18l-46 52h46v20h-74v-18l46-52h-44z"/></g><rect x="374" y="88" width="18" height="18" rx="2" fill="#2D7CFF"/></svg><span class="tech">TECH</span></a>
     <ul><li><a href="#services">خدماتنا</a></li><li><a href="#work">أعمالنا</a></li><li><a href="#process">كيف نشتغل</a></li><li><a href="#why">ليش ركاز</a></li></ul>
-    <a class="pill" href="#contact">تواصل معنا</a>
+    <a class="pill" href="#contact">استشارة مجانية</a>
   </div>
 </nav>
 
@@ -235,7 +246,7 @@ footer a:hover{color:var(--ink)}
     <div class="eyebrow rv">ركاز تك</div>
     <h1 class="rv">نبني أساس شغلك الرقمي</h1>
     <p class="rv">مواقع، متاجر، أنظمة، تطبيقات وسوشال ميديا، مصممة بدقة ومبنية لتكبر مع شغلك.</p>
-    <div class="links rv"><a class="btn" href="#contact">ابدأ مشروعك</a><a href="#work">شوف أعمالنا ›</a></div>
+    <div class="links rv"><a class="btn" href="#contact">احجز استشارتك المجانية</a><a href="#work">شوف أعمالنا ›</a></div>
   </div>
   <div class="stage" id="stage">
     <div class="laptop"><div class="screen"><img src="assets/aura-desktop.jpg" alt="متجر AuraHome من أعمالنا"></div><div class="base"></div></div>
@@ -355,7 +366,26 @@ footer a:hover{color:var(--ink)}
   <div class="wrap">
     <div class="eyebrow rv" style="color:#5CC8FF">عندك فكرة؟</div>
     <h2 class="rv">خلنا نبنيها مع بعض</h2>
-    <p class="rv">راسلنا ونرد عليك بأقرب وقت.</p>
+    <p class="rv">احجز استشارتك المجانية، نسمع فكرتك ونقول لك شنو يناسبك وكم يكلف، بدون أي التزام.</p>
+    <div class="book rv">
+      <span class="free">مجاناً</span>
+      <h3>احجز استشارتك المجانية</h3>
+      <small>عبّي البيانات ونتواصل معك لتحديد الموعد.</small>
+      <form id="bookForm">
+        <input name="n" placeholder="الاسم" required>
+        <input name="p" type="tel" inputmode="tel" placeholder="رقم التلفون" required>
+        <select name="t" required>
+          <option value="" disabled selected>نوع المشروع</option>
+          <option>موقع إلكتروني</option><option>متجر إلكتروني</option><option>تشغيل مطعم أو كافيه</option><option>نظام أو تطبيق</option><option>سوشال ميديا</option><option>غير متأكد، أبي نصيحة</option>
+        </select>
+        <select name="w">
+          <option value="" disabled selected>وقت الاستشارة المناسب</option>
+          <option>الصبح</option><option>العصر</option><option>المسا</option>
+        </select>
+        <textarea name="d" placeholder="عطنا نبذة عن فكرتك (اختياري)"></textarea>
+        <button type="submit">احجز الحين</button>
+      </form>
+    </div>
     <div class="contact rv">
       <a class="main" href="https://instagram.com/rakaztech" target="_blank" rel="noopener"><svg><use href="#ig"/></svg><span class="en">@rakaztech</span></a>
       <a href="https://www.tiktok.com/@rakaztech.kw" target="_blank" rel="noopener"><svg><use href="#tt"/></svg><span class="en">@rakaztech.kw</span></a>
@@ -374,6 +404,9 @@ footer a:hover{color:var(--ink)}
 
 <script>
 document.getElementById('y').textContent=new Date().getFullYear();
+document.getElementById('bookForm').addEventListener('submit',e=>{e.preventDefault();const f=e.target;
+const b=`الاسم: ${f.n.value}\nالتلفون: ${f.p.value}\nنوع المشروع: ${f.t.value}\nالوقت المناسب: ${f.w.value||'-'}\n\n${f.d.value}`;
+location.href='mailto:hello@rakaztech.com?subject='+encodeURIComponent('حجز استشارة مجانية - '+f.n.value)+'&body='+encodeURIComponent(b);});
 // scroll reveal
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.15});
 document.querySelectorAll('.rv').forEach((el,i)=>{el.style.transitionDelay=(i%4)*80+'ms';io.observe(el)});
