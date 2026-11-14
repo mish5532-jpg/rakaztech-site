@@ -275,7 +275,7 @@ const KIDS={
  khalid:{key:'khalid',bro:'abd',name:'خالد',nick:'خالد',face:khalidSVG,grade:2,gradeTxt:'ثاني ابتدائي',buddy:'برق',svg:carSVG,c:'#2563eb',c2:'#ff5a36'},
  hammoud:{key:'hammoud',bro:'fahd',name:'حمود',nick:'حمود',face:hammoudSVG,grade:2,gradeTxt:'ثاني ابتدائي',buddy:'رعد',svg:()=>carSVG('#0ea5e9','#0369a1','H'),c:'#0891b2',c2:'#f59e0b'},
  abd:{key:'abd',bro:'khalid',name:'عبدالرحمن',nick:'حمني',face:hamniSVG,grade:1,gradeTxt:'أولى ابتدائي',buddy:'شوتي',svg:ballSVG,c:'#16a34a',c2:'#f59e0b'},
- fahd:{key:'fahd',bro:'hammoud',name:'فهد',nick:'فهد',face:fahdSVG,grade:1,gradeTxt:'أولى ابتدائي',buddy:'هدّاف',svg:()=>ballSVG('#ea580c'),c:'#ea580c',c2:'#2563eb'},
+ fahd:{key:'fahd',bro:'hammoud',name:'فهد',nick:'فهد',face:fahdSVG,grade:0.5,gradeTxt:'ثاني روضة',buddy:'هدّاف',svg:()=>ballSVG('#ea580c'),c:'#ea580c',c2:'#2563eb'},
  munther:{key:'munther',bro:'abd',name:'منذر',nick:'منذر',face:muntherSVG,grade:0,gradeTxt:'أولى روضة',buddy:'زوم',svg:()=>carSVG('#a855f7','#7e22ce','M'),c:'#7c3aed',c2:'#f97316'}
 };
 const GAMES=[
@@ -351,7 +351,7 @@ const pn=(a,n)=>pick(a).replace('{n}',n);
 function choose(pool,it,n,key){const others=shuffle(pool.filter(x=>key(x)!==key(it))).slice(0,n-1);return shuffle([it,...others])}
 function fresh(pool,G,key){let it,t=0;do{it=pick(pool);t++}while(G.recent.includes(key(it))&&t<30);G.recent.push(key(it));if(G.recent.length>8)G.recent.shift();return it}
 function genAR(G){
- const g=G.k.grade,n=g===0?2:g===1?3:4;const t=pick(g<=1?['find','find','first','first']:['first','pic','missing','find']);
+ const g=G.k.grade,n=g===0?2:g<=1?3:4;const t=pick(g<=1?['find','find','first','first']:['first','pic','missing','find']);
  const it=fresh(AR,G,x=>x[0]);const fix=[[it[2]+'، أولها حرف ال'+it[1],'ar']];
  if(t==='find'){const o=choose(AR,it,n,x=>x[0]);return{prompt:'اسمع 👂 وين الحرف؟',say:[['وينه حرف ال'+it[1]+'؟','ar']],opts:o.map(x=>({h:`<span class="L">${x[0]}</span>`,v:x[0]})),ans:it[0],fix:[['هذا هو حرف ال'+it[1],'ar']]}}
  if(t==='first'){const o=choose(AR,it,n,x=>x[0]);return{prompt:'شنو أول حرف بالكلمة؟',vis:`<div class="emo">${it[3]}</div>`,say:[[it[2],'ar'],['شنو أول حرف فيها؟','ar']],opts:o.map(x=>({h:`<span class="L">${x[0]}</span>`,v:x[0]})),ans:it[0],fix,reveal:it[2]}}
@@ -360,7 +360,7 @@ function genAR(G){
  return{prompt:'شنو الحرف اللي ناقص؟',vis:`<div class="emo" style="font-size:56px">${it[3]}</div><div class="word"><span class="blank">؟</span>${rest}</div>`,say:[[it[2],'ar'],['شنو الحرف اللي ناقص؟','ar']],opts:o.map(x=>({h:`<span class="L">${x[0]}</span>`,v:x[0]})),ans:it[0],fix}
 }
 function genEN(G){
- const g=G.k.grade,n=g===0?2:g===1?3:4;const t=pick(g===0?['find']:g===1?['find','find','first','first']:['first','case','hear','find']);
+ const g=G.k.grade,n=g===0?2:g<=1?3:4;const t=pick(g===0?['find']:g<1?['find','find','first']:g===1?['find','find','first','first']:['first','case','hear','find']);
  if(t==='find'){const it=fresh(EN,G,x=>x[0]);const low=g===2&&Math.random()<.5;const o=choose(EN,it,n,x=>x[0]);const f=x=>low?x[0].toLowerCase():x[0];
   return{prompt:'اسمع 👂 وين الحرف؟',say:[['وينه حرف','ar'],[it[0]+'.','en']],opts:o.map(x=>({h:`<span class="L en">${f(x)}</span>`,v:x[0]})),ans:it[0],fix:[['This is','en'],[it[0]+'.','en']]}}
  const it=fresh(EN_F,G,x=>x[0]);const fix=[[it[1]+' starts with '+it[0]+'.','en']];
@@ -370,13 +370,13 @@ function genEN(G){
 }
 function numOpts(ans,n,max){const s=new Set([ans]);let t=0;while(s.size<n&&t<80){t++;const d=ans+(rnd(9)-4);if(d>=0&&d<=max)s.add(d)}let k=0;while(s.size<n)s.add(max+(++k));return shuffle([...s]).map(v=>({h:numH(v),v}))}
 function genNUM(G){
- const g=G.k.grade,n=g===0?2:g===1?3:4;
- const t=pick(g===0?['count','count','hear']:g===1?['count','count','hear','add','big']:['add','sub','hear','big','seq','add']);
+ const g=G.k.grade,n=g===0?2:g<=1?3:4;
+ const t=pick(g===0?['count','count','hear']:g<1?['count','count','hear','add']:g===1?['count','count','hear','add','big']:['add','sub','hear','big','seq','add']);
  if(t==='count'){const c=1+rnd(g===0?5:10),e=pick(OBJ);return{prompt:'عِدّ وياي! كم واحد؟',vis:`<div class="cnt">${Array(c).fill(e).join('')}</div>`,say:[['عِدّ وياي! كم واحد تشوف؟','ar']],opts:numOpts(c,n,12),ans:c,fix:[['كلهم','ar'],[c,'ar']]}}
- if(t==='hear'){const m=g===0?10:g===1?20:100,v=g===0?1+rnd(10):g===1?1+rnd(20):11+rnd(89);return{prompt:'اسمع 👂 أي رقم؟',say:[['وينه رقم','ar'],[v,'ar']],opts:numOpts(v,n,m),ans:v,fix:[['هذا رقم','ar'],[v,'ar']]}}
- if(t==='add'){let a,b;if(g===1){a=1+rnd(5);b=1+rnd(5)}else{a=3+rnd(12);b=2+rnd(20-a-1)}const e=pick(OBJ);
-  const vis=g===1?`<div><div class="math">${a} + ${b}</div><div class="cnt" style="font-size:30px">${Array(a).fill(e).join('')} ➕ ${Array(b).fill(e).join('')}</div></div>`:`<div class="math">${a} + ${b} = ?</div>`;
-  return{prompt:'كم يصير؟',vis,say:[[a,'ar'],['زايد','ar'],[b,'ar'],['كم يصير؟','ar']],opts:numOpts(a+b,n,g===1?12:25),ans:a+b,fix:[[a,'ar'],['زايد','ar'],[b,'ar'],['يصير','ar'],[a+b,'ar']]}}
+ if(t==='hear'){const m=g===0?10:g<=1?20:100,v=g===0?1+rnd(10):g<=1?1+rnd(20):11+rnd(89);return{prompt:'اسمع 👂 أي رقم؟',say:[['وينه رقم','ar'],[v,'ar']],opts:numOpts(v,n,m),ans:v,fix:[['هذا رقم','ar'],[v,'ar']]}}
+ if(t==='add'){let a,b;if(g<1){a=1+rnd(3);b=1+rnd(2)}else if(g===1){a=1+rnd(5);b=1+rnd(5)}else{a=3+rnd(12);b=2+rnd(20-a-1)}const e=pick(OBJ);
+  const vis=g<=1?`<div><div class="math">${a} + ${b}</div><div class="cnt" style="font-size:30px">${Array(a).fill(e).join('')} ➕ ${Array(b).fill(e).join('')}</div></div>`:`<div class="math">${a} + ${b} = ?</div>`;
+  return{prompt:'كم يصير؟',vis,say:[[a,'ar'],['زايد','ar'],[b,'ar'],['كم يصير؟','ar']],opts:numOpts(a+b,n,g<=1?12:25),ans:a+b,fix:[[a,'ar'],['زايد','ar'],[b,'ar'],['يصير','ar'],[a+b,'ar']]}}
  if(t==='sub'){const a=6+rnd(15),b=1+rnd(a-1);return{prompt:'كم يبقى؟',vis:`<div class="math">${a} − ${b} = ?</div>`,say:[[a,'ar'],['ناقص','ar'],[b,'ar'],['كم يصير؟','ar']],opts:numOpts(a-b,n,20),ans:a-b,fix:[[a,'ar'],['ناقص','ar'],[b,'ar'],['يصير','ar'],[a-b,'ar']]}}
  if(t==='big'){const m=g===1?20:100;let a=1+rnd(m),b;do{b=1+rnd(m)}while(b===a);const mx=Math.max(a,b);return{prompt:'أي رقم أكبر؟ 🐘',say:[['أي رقم الأكبر؟','ar']],opts:shuffle([a,b]).map(v=>({h:numH(v),v})),ans:mx,fix:[[mx,'ar'],['هو الأكبر','ar']]}}
  const st=pick([1,2,5,10]),s0=st*(rnd(6)+1),seq=[s0,s0+st,s0+2*st],a=s0+3*st;
@@ -417,7 +417,7 @@ function openWorld(key){
 let G=null;
 function startGame(id){
  ac();SFX.whistle();const k=KIDS[cur.kid],B=KIDS[k.bro],gm=GAMES.find(g=>g.id===id);
- G={id:Date.now(),gm,k,B,streak:0,warned:false,near:false,recent:[],ok:0,bad:0,qn:0,rival:0,shots:[],goal:gm.mode==='race'?(k.grade===0?6:8):(id==='mix'?(k.grade===0?5:7):5),busy:false};
+ G={id:Date.now(),gm,k,B,streak:0,warned:false,near:false,recent:[],ok:0,bad:0,qn:0,rival:0,shots:[],goal:gm.mode==='race'?(k.grade===0?6:k.grade<1?7:8):(id==='mix'?(k.grade===0?5:7):5),busy:false};
  const scene=gm.mode==='race'
   ?`<div class="track"><div class="flag">🏁</div><div class="finish"></div><div class="lane"><span class="nm">${k.name}</span><span class="car" id="me">🏎️<span class="pilot">${k.face()}</span></span></div><div class="lane"><span class="nm">${B.name}</span><span class="car" id="rv">🚙<span class="pilot">${B.face()}</span></span></div></div>`
   :`<div class="pitch"><div class="goal"><div class="keeper" id="kp"><div class="hd kf">${B.face()}</div><div class="bd"></div></div></div><div class="spot"></div><div class="shooter">${k.face()}</div><div class="ball" id="bl">⚽</div><div class="gooal" id="gl">قوووول!</div></div>`;
@@ -456,7 +456,7 @@ function answer(i,btn){
   else if(!G.warned&&G.rival+1.5>G.ok){G.warned=true;first=[`يالله يا ${N}! ${BN} قاعد يسبقك!`,'ar']}
   say([first,...q.fix])}
  if(G.gm.mode==='race'){
-  const rate=G.k.grade===0?.3:G.k.grade===1?.4:.5;G.rival+=rate+(ok?0:1);
+  const rate=G.k.grade===0?.3:G.k.grade<1?.35:G.k.grade===1?.4:.5;G.rival+=rate+(ok?0:1);
   const me=$('#me'),rv=$('#rv');const pos=v=>(2+Math.min(v,G.goal)/G.goal*84)+'%';
   setTimeout(()=>{if(!G||G.id!==gid)return;if(ok){me.classList.remove('zoom');void me.offsetWidth;me.classList.add('zoom');SFX.vroom()}me.style.right=pos(G.ok);rv.style.right=pos(G.rival)},250);
  }else{shoot(ok,gid);G.shots.push(ok)}
