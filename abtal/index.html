@@ -326,7 +326,8 @@ function stopSay(){sayTok++;try{if(curSrc){curSrc.onended=null;curSrc.stop()}}ca
 async function say(parts){
  if(!S.voice)return;stopSay();const tok=sayTok;const a=ac();
  for(const [t,l] of parts){
-  if(tok!==sayTok)return;const key=(l==='en'?'en':'ar')+'|'+String(t);
+  if(tok!==sayTok)return;let key=(l==='en'?'en':'ar')+'|'+String(t);
+  if(l!=='en'&&!CL[key]&&CLready&&/حمود|فهد/.test(String(t))){const tt=String(t);if(/^هلا والله/.test(tt))continue;key='ar|'+(/صد|فاز هالمرة|يسبقك/.test(tt)?'ولا يهمك!':pick(['كفو يا بطل!','الله عليك!','عفية عليك!','يا سلام عليك!']))}
   const bf=await getBuf(key);if(tok!==sayTok)return;
   if(bf&&a){await new Promise(res=>{const s=a.createBufferSource();s.buffer=bf;const g=a.createGain();g.gain.value=1.4;s.connect(g);g.connect(a.destination);s.onended=()=>res();curSrc=s;s.start();setTimeout(res,(bf.duration+1)*1000)});await new Promise(r=>setTimeout(r,60))}
   else if('speechSynthesis' in window)await ttsOne(t,l);
