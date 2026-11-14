@@ -177,6 +177,18 @@ button{font-family:inherit;color:inherit;border:0;cursor:pointer}
 .pilot .chr .body{animation:none}
 .shooter{position:absolute;bottom:4px;left:calc(50% + 40px);width:clamp(70px,9vw,96px)}
 .res-chr{width:170px}
+.crown{position:absolute;top:-34px;left:50%;transform:translateX(-50%) rotate(-8deg);font-size:46px;z-index:3;animation:bob 1.6s ease-in-out infinite;filter:drop-shadow(0 4px 4px rgba(0,0,0,.2))}
+.kid .crown{top:-8px;font-size:40px}
+.topday{position:absolute;top:12px;right:12px;background:#facc15;color:#713f12;font-weight:800;border-radius:99px;padding:3px 12px;font-size:15px;box-shadow:0 3px 0 #ca8a04}
+.keeper .hd.kf{width:58px;height:58px;margin-left:-2px;background:none;border-radius:50%;overflow:hidden;margin-bottom:-6px}
+.keeper .hd.kf::after{display:none}.keeper .hd.kf .chr .body{animation:none}
+.fire{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:70;pointer-events:none;animation:fireIn 1.9s ease forwards}
+.fire .ff{width:min(38vw,260px)}.fire b{font-size:clamp(40px,7vw,70px);color:#fff;text-shadow:0 5px 0 #c2410c,0 0 30px #f97316;margin-top:6px}
+@keyframes fireIn{0%{opacity:0;transform:scale(.4)}15%{opacity:1;transform:scale(1.08)}25%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:scale(1.05)}}
+.lvlup{background:linear-gradient(90deg,#a855f7,#6366f1);color:#fff;border-radius:20px;padding:10px;margin-top:10px;font-size:clamp(22px,3vw,28px);font-weight:800;animation:okPop .6s ease}
+.cert{display:flex;align-items:center;gap:14px;margin-top:12px;padding:14px;border-radius:24px;background:linear-gradient(135deg,#fef9c3,#fde68a);border:4px double #ca8a04;text-align:right}
+.cert-face{width:110px;flex:none;position:relative}.cert-face .crown{top:-26px;font-size:38px}
+.cert-t{font-size:clamp(20px,2.8vw,26px);font-weight:800;color:#a16207}.cert-n{font-size:clamp(30px,4.5vw,42px);font-weight:800;color:var(--acc)}
 /* rakaz badge */
 .rkz-wrap{text-align:center;margin:22px 0 4px}
 .rkz{display:inline-flex;align-items:center;gap:9px;direction:ltr;text-decoration:none;background:#fff;border:1px solid #dfe6f7;border-radius:999px;padding:8px 16px 8px 14px;box-shadow:0 6px 18px -12px rgba(11,26,58,.45);transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s;position:relative;overflow:hidden}
@@ -253,8 +265,8 @@ function photoKid(img,shirt,deco){return `<svg viewBox="0 0 200 224" class="chr 
 function khalidSVG(){return photoKid(IMG_K,'#e11d48',`<path d="M52 224 L60 160 M148 224 L140 160" stroke="#fff" stroke-width="7"/><polygon points="100,170 111,170 103,186 115,186 95,212 101,193 90,193" fill="#facc15" stroke="#14213d" stroke-width="2"/>`)}
 function hamniSVG(){return photoKid(IMG_H,'#16a34a',`<path d="M40 224 L44 176 M160 224 L156 176" stroke="#fff" stroke-width="5"/><text x="100" y="212" text-anchor="middle" font-size="34" font-weight="800" fill="#fff" stroke="#14213d" stroke-width="1.5" font-family="Fredoka">7</text>`)}
 const KIDS={
- khalid:{key:'khalid',name:'خالد',nick:'خالد',face:khalidSVG,grade:2,gradeTxt:'ثاني ابتدائي',buddy:'برق',svg:carSVG,c:'#2563eb',c2:'#ff5a36'},
- abd:{key:'abd',name:'عبدالرحمن',nick:'حمني',face:hamniSVG,grade:1,gradeTxt:'أولى ابتدائي',buddy:'شوتي',svg:ballSVG,c:'#16a34a',c2:'#f59e0b'}
+ khalid:{key:'khalid',bro:'abd',name:'خالد',nick:'خالد',face:khalidSVG,grade:2,gradeTxt:'ثاني ابتدائي',buddy:'برق',svg:carSVG,c:'#2563eb',c2:'#ff5a36'},
+ abd:{key:'abd',bro:'khalid',name:'عبدالرحمن',nick:'حمني',face:hamniSVG,grade:1,gradeTxt:'أولى ابتدائي',buddy:'شوتي',svg:ballSVG,c:'#16a34a',c2:'#f59e0b'}
 };
 const GAMES=[
  {id:'ar',title:'سباق الحروف',sub:'عربي',ic:'أ',mode:'race',gen:'ar',cls:'t-red'},
@@ -269,7 +281,9 @@ if(!P.s)P.s={voice:true,sfx:true};const S=P.s;
 function prof(k){if(!P[k])P[k]={stars:0,games:0,day:'',dayStars:0,best:{}};return P[k]}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(P))}catch(e){}}
 function today(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
-function addStars(k,n){const p=prof(k);const before=Math.min(STICKERS.length,Math.floor(p.stars/3));p.stars+=n;if(p.day!==today()){p.day=today();p.dayStars=0}p.dayStars+=n;save();const after=Math.min(STICKERS.length,Math.floor(p.stars/3));return STICKERS.slice(before,after)}
+function yday(){const d=new Date(Date.now()-864e5);return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
+let EXTRA={};
+function addStars(k,n){const p=prof(k);const before=Math.min(STICKERS.length,Math.floor(p.stars/3));const lv0=lvl(p.stars),ds0=(p.day===today()?p.dayStars:0);p.stars+=n;if(p.day!==today()){p.day=today();p.dayStars=0}p.dayStars+=n;if(p.lastDay!==today()){p.streak=(p.lastDay===yday()?(p.streak||0)+1:1);p.lastDay=today()}EXTRA={lvlup:lvl(p.stars)>lv0?lvl(p.stars):0,champ:ds0<5&&p.dayStars>=5};if(EXTRA.champ)p.champ=(p.champ||0)+1;save();const after=Math.min(STICKERS.length,Math.floor(p.stars/3));return STICKERS.slice(before,after)}
 const lvl=s=>1+Math.floor(s/10);
 
 /* ---------- audio ---------- */
@@ -361,7 +375,8 @@ const GEN={ar:genAR,en:genEN,num:genNUM,mix:G=>pick([genAR,genEN,genNUM])(G)};
 
 /* ---------- home ---------- */
 function renderHome(){
- $('#kids').innerHTML=Object.values(KIDS).map(k=>{const p=prof(k.key);return `<button class="kid" style="--c:${k.c}" onclick="openWorld('${k.key}')"><div class="av" style="position:relative">${k.face()}<div class="buddy">${k.svg()}</div></div><h2>${k.name}</h2><div class="gr">${k.gradeTxt} • صاحبه ${k.buddy}</div><div class="chips"><span class="chip">⭐ ${p.stars}</span><span class="chip">🏅 مستوى ${lvl(p.stars)}</span></div></button>`}).join('');
+ const dsOf=k=>{const p=prof(k);return p.day===today()?p.dayStars:0};const dA=dsOf('khalid'),dB=dsOf('abd');const top=dA>dB?'khalid':dB>dA?'abd':null;
+ $('#kids').innerHTML=Object.values(KIDS).map(k=>{const p=prof(k.key);const st=(p.lastDay===today()||p.lastDay===yday())?(p.streak||0):0;return `<button class="kid" style="--c:${k.c}" onclick="openWorld('${k.key}')"><div class="av" style="position:relative">${top===k.key?'<div class="crown">👑</div>':''}${k.face()}<div class="buddy">${k.svg()}</div></div><h2>${k.name}</h2><div class="gr">${k.gradeTxt} • صاحبه ${k.buddy}</div><div class="chips"><span class="chip">⭐ ${p.stars}</span><span class="chip">🏅 مستوى ${lvl(p.stars)}</span>${st>1?`<span class="chip">🔥 ${st} أيام</span>`:''}${p.champ?`<span class="chip">🏆 ${p.champ}</span>`:''}</div>${top===k.key?'<div class="topday">بطل اليوم 👑</div>':''}</button>`}).join('');
  document.documentElement.style.setProperty('--acc','#2563eb');show('home');
 }
 
@@ -372,7 +387,7 @@ function openWorld(key){
  const greet=p.dayStars>=5?`خلصت هدف اليوم! إنت بطل يا ${k.nick} 🏆`:`هلا والله ب${k.nick}! أنا ${k.buddy} 👋 شنو نلعب اليوم؟`;
  const w=$('#world');w.innerHTML=`
  <div class="hdr"><button class="hbtn" onclick="SFX.tap();renderHome()">🏠</button><div class="hface">${k.face()}</div><div class="hname">${k.name}</div>
- <div class="stat"><span class="chip">⭐ ${p.stars}</span><span class="chip">🏅 ${lvl(p.stars)}</span></div></div>
+ <div class="stat"><span class="chip">⭐ ${p.stars}</span><span class="chip">🏅 ${lvl(p.stars)}</span>${(p.streak||0)>1&&(p.lastDay===today()||p.lastDay===yday())?`<span class="chip">🔥 ${p.streak}</span>`:''}${p.champ?`<span class="chip">🏆 ${p.champ}</span>`:''}</div></div>
  <div class="greet"><div class="mini" id="wchr">${k.svg()}</div><div style="flex:1"><div class="bubble">${greet}</div>
  <div class="daily">🎯 هدف اليوم: ${ds} من 5 نجوم</div><div class="goalbar"><i style="width:${ds*20}%"></i></div></div></div>
  <div class="sec">🎮 العب واجمع نجوم</div>
@@ -390,11 +405,11 @@ function openWorld(key){
 /* ---------- game engine ---------- */
 let G=null;
 function startGame(id){
- ac();SFX.whistle();const k=KIDS[cur.kid],gm=GAMES.find(g=>g.id===id);
- G={id:Date.now(),gm,k,recent:[],ok:0,bad:0,qn:0,rival:0,shots:[],goal:gm.mode==='race'?8:(id==='mix'?7:5),busy:false};
+ ac();SFX.whistle();const k=KIDS[cur.kid],B=KIDS[k.bro],gm=GAMES.find(g=>g.id===id);
+ G={id:Date.now(),gm,k,B,streak:0,warned:false,near:false,recent:[],ok:0,bad:0,qn:0,rival:0,shots:[],goal:gm.mode==='race'?8:(id==='mix'?7:5),busy:false};
  const scene=gm.mode==='race'
-  ?`<div class="track"><div class="flag">🏁</div><div class="finish"></div><div class="lane"><span class="nm">${k.name}</span><span class="car" id="me">🏎️<span class="pilot">${k.face()}</span></span></div><div class="lane"><span class="nm">المنافس</span><span class="car" id="rv">🚙</span></div></div>`
-  :`<div class="pitch"><div class="goal"><div class="keeper" id="kp"><div class="hd"></div><div class="bd"></div></div></div><div class="spot"></div><div class="shooter">${k.face()}</div><div class="ball" id="bl">⚽</div><div class="gooal" id="gl">قوووول!</div></div>`;
+  ?`<div class="track"><div class="flag">🏁</div><div class="finish"></div><div class="lane"><span class="nm">${k.name}</span><span class="car" id="me">🏎️<span class="pilot">${k.face()}</span></span></div><div class="lane"><span class="nm">${B.name}</span><span class="car" id="rv">🚙<span class="pilot">${B.face()}</span></span></div></div>`
+  :`<div class="pitch"><div class="goal"><div class="keeper" id="kp"><div class="hd kf">${B.face()}</div><div class="bd"></div></div></div><div class="spot"></div><div class="shooter">${k.face()}</div><div class="ball" id="bl">⚽</div><div class="gooal" id="gl">قوووول!</div></div>`;
  $('#game').innerHTML=`<div class="gtop"><button class="hbtn" onclick="quitGame()">✕</button><div class="gtitle ${id==='en'?'en':''}">${gm.title}</div><div class="prog" id="prog"></div></div>
  <div class="scene">${scene}</div>
  <div class="qrow"><div class="mini" id="gchr">${k.face()}</div><div class="qcard"><div style="flex:1"><div class="qtext" id="qt"></div></div><div class="vis" id="qv"></div><button class="say" onclick="sayQ()">🔊</button></div></div>
@@ -417,8 +432,18 @@ function answer(i,btn){
  if(!G||G.busy)return;G.busy=true;const q=G.q,ok=q.opts[i].v===q.ans,gid=G.id;
  const btns=[...document.querySelectorAll('.opt')];
  if(q.reveal)$('#qv').insertAdjacentHTML('beforeend',`<div class="word" style="font-size:34px;width:100%;text-align:center">${q.reveal}</div>`);
- if(ok){btn.classList.add('ok');btns.forEach(b=>b!==btn&&b.classList.add('dim'));SFX.ding();G.ok++;react($('#gchr'),'happy');say([[pn(PRAISE,G.k.nick),'ar']])}
- else{btn.classList.add('no');btns[q.opts.findIndex(x=>x.v===q.ans)].classList.add('ok');SFX.oops();G.bad++;react($('#gchr'),'sad');say([[pick(ENCOUR),'ar'],...q.fix])}
+ const N=G.k.nick,BN=G.B.nick,race=G.gm.mode==='race';
+ if(ok){btn.classList.add('ok');btns.forEach(b=>b!==btn&&b.classList.add('dim'));SFX.ding();G.ok++;G.streak++;react($('#gchr'),'happy');
+  let line=pn(PRAISE,N);
+  if(G.streak===3||G.streak===6){line=`${N} على نار!`;fire(`🔥 ${N} على نار!`)}
+  else if(race&&!G.near&&G.ok===G.goal-2){G.near=true;line=`كمل يا ${N}، باقي شوي!`}
+  else if(!race&&Math.random()<.6)line=`قوووول يا ${N}!`;
+  say([[line,'ar']])}
+ else{btn.classList.add('no');btns[q.opts.findIndex(x=>x.v===q.ans)].classList.add('ok');SFX.oops();G.bad++;G.streak=0;react($('#gchr'),'sad');
+  let first=[pick(ENCOUR),'ar'];
+  if(!race)first=[`${BN} صد الكورة!`,'ar'];
+  else if(!G.warned&&G.rival+1.5>G.ok){G.warned=true;first=[`يالله يا ${N}! ${BN} قاعد يسبقك!`,'ar']}
+  say([first,...q.fix])}
  if(G.gm.mode==='race'){
   const rate=G.k.grade===1?.4:.5;G.rival+=rate+(ok?0:1);
   const me=$('#me'),rv=$('#rv');const pos=v=>(2+Math.min(v,G.goal)/G.goal*84)+'%';
@@ -438,16 +463,19 @@ function shoot(ok,gid){
 }
 function finish(){
  const g=G,k=g.k,p=prof(k.key);let stars,won=true,title,msg;
- if(g.gm.mode==='race'){won=g.ok>=g.goal;stars=won?(g.bad<=1?3:2):1;title=won?'فزت بالسباق! 🏆':'المنافس سبقك هالمرة';msg=won?`${k.buddy} يقول: سواقتك نار يا ${k.nick}!`:'ولا يهمك، الجاية لك! 💪'}
+ if(g.gm.mode==='race'){won=g.ok>=g.goal;stars=won?(g.bad<=1?3:2):1;title=won?`فزت على ${g.B.nick}! 🏆`:`${g.B.nick} فاز هالمرة، الجاية لك!`;msg=won?`${k.buddy} يقول: سواقتك نار يا ${k.nick}!`:'كل مرة تصير أقوى! يالله جرب مرة ثانية'}
  else{const goals=g.shots.filter(Boolean).length;stars=goals===g.goal?3:goals>=Math.ceil(g.goal*.6)?2:1;title=`جبت ${goals} أقوال! ⚽`;msg=stars===3?'يا سلام! إنت هداف البطولة 🥇':stars===2?`حلو يا ${k.nick}! باقي لك شوي وتجيبهم كلهم`:'كل مرة تصير أقوى! يالله جرب مرة ثانية'}
- p.games++;p.best[g.gm.id]=Math.max(p.best[g.gm.id]||0,stars);const news=addStars(k.key,stars);
+ p.games++;p.best[g.gm.id]=Math.max(p.best[g.gm.id]||0,stars);const news=addStars(k.key,stars);const X=EXTRA;
  G=null;SFX.fanfare();if(stars>=2)confetti();
  $('#ovc').innerHTML=`<div class="res-chr happy" style="position:relative">${k.face()}<div class="buddy" style="width:42%">${k.svg()}</div></div><h3>${title}</h3><div class="stars3">${[0,1,2].map(i=>`<span class="${i<stars?'':'off'}" style="animation-delay:${.2+i*.25}s">⭐</span>`).join('')}</div><p>${msg}</p>
  ${news.length?`<div class="newst">🎁 ملصق جديد! <span class="e">${news.join(' ')}</span></div>`:`<p class="small">باقي ${3-(p.stars%3)} ⭐ للملصق الجاي</p>`}
+ ${X.lvlup?`<div class="lvlup">🎉 طلعت مستوى ${X.lvlup}!</div>`:''}
+ ${X.champ?`<div class="cert"><div class="cert-face"><div class="crown">👑</div>${k.face()}</div><div><div class="cert-t">شهادة بطل اليوم</div><div class="cert-n">${k.name}</div><div class="small">${new Date().toLocaleDateString('ar-KW',{weekday:'long',day:'numeric',month:'long'})} • ⭐ ${p.dayStars}</div></div></div>`:''}
  <div class="btns"><button class="btn" onclick="closeOv();startGame('${g.gm.id}')">🔁 مرة ثانية</button><button class="btn alt" onclick="closeOv();openWorld('${k.key}')">🏠 رجوع</button></div>`;
  $('#ov').classList.add('on');
- setTimeout(()=>say([[title.replace(/[🏆⚽]/g,'').trim(),'ar'],[msg.replace(/[🥇💪]/g,'').trim(),'ar'],...(news.length?[['مبروك! طلع لك ملصق جديد','ar']]:[])]),300);
+ setTimeout(()=>say([[title.replace(/[🏆⚽]/g,'').trim(),'ar'],[msg.replace(/[🥇💪]/g,'').trim(),'ar'],...(news.length?[['مبروك! طلع لك ملصق جديد','ar']]:[]),...(X.lvlup?[[`يا سلام! ${k.nick} طلع مستوى جديد!`,'ar']]:[]),...(X.champ?[[`مبروك يا ${k.nick}! صرت بطل اليوم`,'ar']]:[])]),300);
 }
+function fire(t){const d=document.createElement('div');d.className='fire';d.innerHTML=`<div class="ff">${G.k.face()}</div><b>${t}</b>`;document.body.appendChild(d);confetti(40);setTimeout(()=>d.remove(),1900)}
 function quitGame(){G=null;stopSay();SFX.tap();openWorld(cur.kid)}
 function closeOv(){$('#ov').classList.remove('on')}
 
