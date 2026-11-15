@@ -521,7 +521,7 @@ body.dark .viewseg .pill{background:#2a2220}
   <div class="goal" id="goal"></div>
 
   <div class="searchbox">
-    <input id="sq" type="search" placeholder="🔍 ابحثي عن آية أو سورة أو صفحة أو جزء…" autocomplete="off" enterkeyhint="search">
+    <input id="sq" type="search" placeholder="🔍 ابحثي: آية · سورة · صفحة · جزء · حزب · ربع" autocomplete="off" enterkeyhint="search">
     <div class="sres" id="sres"></div>
   </div>
   <div class="viewseg" id="viewSeg" role="tablist" aria-label="طريقة تقسيم القلب">
@@ -670,6 +670,7 @@ const QPAGES = [5, 3, 3, 3, 4, 3, 3, 3, 3, 3, 3, 3, 3, 4, 3, 3, 3, 3, 3, 3, 4, 3
 const LEGACY = "quranHeart.fatima.v1";
 const store = (() => { try { const k = "__qh"; localStorage.setItem(k, "1"); localStorage.removeItem(k); return localStorage; } catch(e){ return null; } })();
 const ls = { get: k => { try { return store && store.getItem(k); } catch(e){ return null; } }, set: (k, v) => { try { store && store.setItem(k, v); } catch(e){} } };
+const FRESH = !ls.get("quranHeart.profiles");
 let profiles = []; try { profiles = JSON.parse(ls.get("quranHeart.profiles") || "[]"); } catch(e){}
 if (!profiles.length){ profiles = ["فاطمة محمد البساتنة"]; ls.set("quranHeart.profiles", JSON.stringify(profiles));
   const old = ls.get(LEGACY); if (old) ls.set("quranHeart.p." + profiles[0], old); }
@@ -688,7 +689,14 @@ if (!state.jread) state.jread = {};
 if (!state.qread){ state.qread = {};
   Object.entries(state.jread).forEach(([j, t]) => { for (let k = 1; k <= 8; k++) state.qread[(j - 1) * 8 + k] = t; }); }
 if (!state.pos) state.pos = {};
-const save = () => ls.set(KEY, JSON.stringify(state));
+/* second copy in IndexedDB + ask the browser to keep this site's data permanently */
+const IDB = (() => { let p; return () => p || (p = new Promise((res, rej) => { try { const r = indexedDB.open("quranHeart", 1);
+  r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch(e){ rej(e); } })); })();
+const snapLS = () => { const o = {}; try { for (let i = 0; i < store.length; i++){ const k = store.key(i); if (k.startsWith("quranHeart.")) o[k] = store.getItem(k); } } catch(e){} return o; };
+let mirT; const mirror = () => { clearTimeout(mirT); mirT = setTimeout(() => IDB().then(db => { const t = db.transaction("kv", "readwrite"); t.objectStore("kv").put({t: Date.now(), data: snapLS()}, "all"); }).catch(() => {}), 400); };
+const save = () => { state.saved = Date.now(); ls.set(KEY, JSON.stringify(state)); mirror(); };
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch(e){}
+const idbBackup = () => IDB().then(db => new Promise(res => { const r = db.transaction("kv").objectStore("kv").get("all"); r.onsuccess = () => res(r.result); r.onerror = () => res(null); })).catch(() => null);
 let view = ["s", "p", "j"].includes(state.view) ? state.view : "s";
 
 const pageAyat = p => PAGES[p-1].reduce((s, [, a, b]) => s + b - a + 1, 0);
@@ -860,7 +868,7 @@ function viewUI(){
   [...viewSeg.children].forEach(b => b.classList.toggle("on", b.dataset.v === view));
   document.getElementById("sLbl").textContent = U().noun + " من " + toAr(U().N);
   document.getElementById("listTitle").textContent = ({s: "السور", p: "الصفحات", j: "الأجزاء"})[view];
-  q.placeholder = ({s: "ابحثي عن سورة…", p: "ابحثي برقم الصفحة أو اسم السورة…", j: "ابحثي برقم الجزء أو الحزب أو اسم السورة…"})[view];
+  q.placeholder = ({s: "ابحثي عن سورة…", p: "ابحثي برقم الصفحة أو اسم السورة…", j: "ابحثي: جزء ٣ · حزب ٥ · ربع ١٢ · البقرة ٥٠"})[view];
   document.getElementById("legRead").textContent = "قُرئت";
 }
 viewSeg.addEventListener("click", e => {
@@ -904,6 +912,23 @@ function moreList(){
   if (listPos < listItems.length) grid.appendChild(listMore); else listMore.remove();
 }
 try { new IntersectionObserver(es => { if (es[0].isIntersecting) moreList(); }, {rootMargin: "600px"}).observe(listMore); } catch(e){}
+/* list filter. In the juz view: "ربع ١٢" = quarter 12 of 240, "حزب ٥", "جزء ٣", "البقرة ٥٠" = the quarter holding that ayah, a bare number = juz, hizb or quarter */
+function listMatch(n, label, term, num){
+  const d = (num.match(/\d+/) || [""])[0], k = +d, words = norm(num).replace(/\d+/g, "").trim(); term = norm(num).trim();
+  if (view !== "j"){
+    if (d && !words) return String(n) === d;
+    if (d && view === "p"){ const nm = words.replace(/^(سوره|صفحه)\s*/, ""); return norm(label).includes(nm) && PAGES[n-1].some(([s, a, b]) => norm(SURAH[s-1][0]).includes(nm) && k >= a && k <= b); }
+    return norm(label).includes(term.replace(/^(سوره|صفحه)\s*/, ""));
+  }
+  if (/ربع|ارباع/.test(words) && !/حزب/.test(words)) return k ? n === k : qK(n) === 1;
+  if (/نصف/.test(words)) return k ? qHizb(n) === k && qK(n) === 2 : qK(n) === 2;
+  if (/ثلاث/.test(words)) return k ? qHizb(n) === k && qK(n) === 3 : qK(n) === 3;
+  if (/حزب/.test(words)) return k ? qHizb(n) === k : qK(n) === 0;
+  if (/جزء/.test(words)) return k ? qJuz(n) === k : true;
+  if (d && words){ const nm = words.replace(/^(سوره|ايه|الايه)\s*/, ""); return RUB[n-1].some(([s, a, b]) => norm(SURAH[s-1][0]).includes(nm) && k >= a && k <= b); }
+  if (d) return qJuz(n) === k || qHizb(n) === k || n === k;
+  return norm(label).includes(term);
+}
 function renderList(force){
   const sig = view + "|" + filter + "|" + q.value.trim();
   if (!force && sig === listSig && filter === "all"){
@@ -921,7 +946,7 @@ function renderList(force){
     if (filter === "read" && !r) continue;
     if (filter === "left" && r) continue;
     const label = view === "s" ? SURAH[n-1][0] : view === "p" ? pageSurahs(n) : RUB[n-1].map(([s]) => SURAH[s-1][0]).join(" ");
-    if (raw && !norm(label).includes(term) && String(view === "j" ? qJuz(n) : n) !== num && !(view === "j" && String(qHizb(n)) === num)) continue;
+    if (raw && !listMatch(n, label, term, num)) continue;
     if (view === "j" && qK(n) === 0 && n % 8 === 1){
       const j = qJuz(n), h = document.createElement("div"); h.className = "juzh jh" + (isReadU(j, "J") ? " done" : "");
       h.innerHTML = `<span>الجزء ${toAr(j)} <small>${juzRange(j)}</small></span><button data-j="${j}">اقرئي الجزء كاملًا</button>`;
@@ -1666,11 +1691,22 @@ async function runSearch(){
   if (!raw){ sres.classList.remove("on"); return; }
   const num = +raw.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[^\d]/g, "");
   const term = norm(plain(raw)).replace(/^(سوره|صفحه|الصفحه|جزء|الجزء|ايه|الايه)\s*/, "");
+  const kw = norm(plain(raw));
+  if (num && /ربع|حزب|نصف|ثلاث/.test(kw)){   // "ربع ١٢" / "حزب ٥" → straight to that part
+    const qn = /حزب/.test(kw) ? num * 4 - 3 + (/نصف/.test(kw) ? 2 : /ثلاث/.test(kw) ? 3 : /ربع/.test(kw) ? 1 : 0) : num;
+    if (qn >= 1 && qn <= 240){ sres.appendChild(hit("jz", qName(qn), "يبدأ: " + qStart(qn) + " · " + toAr(rubAyat(qn)) + " آية", () => openQuarter(qn))); sres.classList.add("on"); return; }
+  }
   const f = document.createDocumentFragment(); let n = 0;
   if (num){
     if (num <= 604) f.appendChild(hit("pg", "صفحة " + toAr(num), pageSurahs(num), () => openPage(num)));
     if (num <= 114) f.appendChild(hit("su", "سورة " + SURAH[num-1][0], "السورة رقم " + toAr(num), () => openReader(num)));
     if (num <= 30) f.appendChild(hit("jz", "الجزء " + toAr(num), "يبدأ من " + juzStart(num), () => openJuz(num)));
+    if (num <= 60) f.appendChild(hit("jz", "الحزب " + toAr(num), "الجزء " + toAr(qJuz(num * 4 - 3)) + " · يبدأ: " + qStart(num * 4 - 3), () => openQuarter(num * 4 - 3)));
+    if (num <= 240) f.appendChild(hit("jz", "الربع " + toAr(num) + " من ٢٤٠", qName(num) + " · يبدأ: " + qStart(num), () => openQuarter(num)));
+    const words = term.replace(/[\d٠-٩]+/g, "").trim();
+    if (words){ SURAH.forEach(([name], i) => { if (norm(name).includes(words) && num <= SURAH[i][1] && f.children.length < 12){
+      const sNo = i + 1, qi = RUB.findIndex(segs => segs.some(([s, a, b]) => s === sNo && num >= a && num <= b)) + 1;
+      f.prepend(hit("ay", "سورة " + name + " · الآية " + toAr(num), (qi ? qName(qi) : ""), () => gotoAyah(sNo, num))); } }); }
   }
   if (term.length >= 2 && !/^\d+$/.test(term)){
     SURAH.forEach(([name], i) => { if (norm(name).includes(term) && n < 6){ n++; f.appendChild(hit("su", "سورة " + name, toAr(SURAH[i][1]) + " آية · " + pRange(...SRANGE[i+1]), () => openReader(i + 1))); } });
@@ -1734,6 +1770,20 @@ document.getElementById("resetBtn").onclick = () => {
 
 ownerUI(); buildCells(); viewUI();
 update();
+/* if the browser dropped localStorage but the IndexedDB copy survived, bring it back; otherwise warn on a fresh browser */
+idbBackup().then(bk => {
+  const has = bk && bk.data && bk.data["quranHeart.profiles"];
+  if (FRESH && has){ Object.entries(bk.data).forEach(([k, v]) => ls.set(k, v)); location.reload(); return; }
+  if (!FRESH) mirror();
+  if (FRESH && !has && !state.log.length) setTimeout(() => {
+    openSheet(`<div class="big" style="font-size:24px">لا يوجد تقدّم محفوظ هنا</div>
+      <p>كل متصفح على الجهاز يحفظ قراءته وحده: سفاري، وأيقونة الشاشة الرئيسية، والروابط التي تُفتح من داخل واتساب. إن كنتِ قرأتِ من قبل من مكان آخر فافتحي القلب من هناك، واضغطي «نقل التقدم»، وانسخي الرمز والصقيه هنا.</p>
+      <p style="font-size:14px;color:var(--muted)">ننصح دائمًا بفتح القلب من الأيقونة نفسها كل مرة.</p>
+      <div class="row"><button class="btn red" id="fPaste">لديّ رمز تقدّم</button><button class="btn ghost" id="fNew">أبدأ من جديد</button></div>`);
+    document.getElementById("fNew").onclick = closeSheet;
+    document.getElementById("fPaste").onclick = () => { closeSheet(); setTimeout(() => document.getElementById("syncBtn").click(), 350); };
+  }, 1400);
+});
 try {
   const io = new IntersectionObserver(es => es.forEach(e => wrap.classList.toggle("idle", !e.isIntersecting)), {threshold: 0.05});
   io.observe(stage);
