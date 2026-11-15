@@ -725,7 +725,8 @@ const juzRange = j => { const f = PJUZ.indexOf(j) + 1, l = PJUZ.lastIndexOf(j) +
 const rubAyat = q => RUB[q-1].reduce((s, [, a, b]) => s + b - a + 1, 0);
 const QSYM = ["", "¼", "½", "¾"];
 const qJuz = q => Math.ceil(q / 8), qHizb = q => Math.ceil(q / 4), qK = q => (q - 1) % 4;
-const qShort = q => ["الحزب ", "ربع الحزب ", "نصف الحزب ", "ثلاثة أرباع الحزب "][qK(q)] + toAr(qHizb(q));
+const qIn = q => (q - 1) % 8 + 1;   // her request: number the quarters 1–8 inside each juz, no ¼ ½ ¾ / hizb
+const qShort = q => "الربع " + toAr(qIn(q));
 const qName = q => "الجزء " + toAr(qJuz(q)) + " · " + qShort(q);
 const qStart = q => { const [s, a] = RUB[q-1][0]; return SURAH[s-1][0] + " " + toAr(a); };
 const juzQuarters = j => Array.from({length: 8}, (_, k) => (j - 1) * 8 + k + 1);
@@ -768,7 +769,7 @@ function buildCells(){
   G.cells.forEach((c, i) => {
     const n = i + 1, shade = 205 + ((i * 37) % 13) - 6;
     const fsz = view === "s" ? Math.max(15, Math.min(24, c.r * 0.9)) : view === "j" ? Math.max(15, Math.min(22, c.r * (qK(n) === 0 ? 0.75 : 0.8))) : Math.max(6.5, Math.min(12, c.r * 1.05));
-    const lbl = view === "j" ? (qK(n) === 0 ? toAr(qHizb(n)) : QSYM[qK(n)]) : toAr(n);
+    const lbl = view === "j" ? toAr(qIn(n)) : toAr(n);
     const anim = N <= 120 ? ` style="animation-delay:${(0.2 + i * (1.4 / N)).toFixed(3)}s"` : "";
     parts.push(`<g class="cell${N <= 120 ? "" : " still"}" data-n="${n}" tabindex="${view === "s" ? 0 : -1}" role="button" aria-label="${U().name(n)}"${anim}><path d="${c.d}" fill="rgb(${shade},${shade-4},${shade-8})"/><text class="num" x="${c.x}" y="${c.y}" text-anchor="middle" dominant-baseline="central" font-size="${fsz}">${lbl}</text></g>`);
   });
@@ -776,7 +777,7 @@ function buildCells(){
   cellsG.querySelectorAll(".cell").forEach(g => { cellEls[g.dataset.n] = g; });
   if (view === "j"){   // hizb + juz borders and juz numbers on top
     const ov = document.createElementNS(NS, "g"); ov.setAttribute("class", "jov");
-    G.hizb.forEach(d => { const p = document.createElementNS(NS, "path"); p.setAttribute("d", d); p.setAttribute("class", "hz"); ov.append(p); });
+    /* hizb separator lines removed at her request (they confused the quarters) */
     G.juz.forEach((jz, i) => {
       const p = document.createElementNS(NS, "path"); p.setAttribute("d", jz.d); p.setAttribute("class", "jz"); ov.append(p);
     });
@@ -971,7 +972,7 @@ function renderList(force){
         h.onclick = () => toggleAcc("j", j);
         frag.appendChild(h);
       }
-      if (hz !== lastH){ lastH = hz;
+      if (false && hz !== lastH){ lastH = hz;   // no hizb level any more: juz → its 8 quarters
         const h = document.createElement("div"); h.className = "hzh acc" + (openH.has(hz) ? " open" : ""); h.dataset.j = j; h.dataset.ah = hz; h.hidden = !openJ.has(j);
         h.innerHTML = `<i class="chev">‹</i>الحزب ${toAr(hz)} <small>يبدأ: ${qStart(hz * 4 - 3)}</small><em class="cnt" data-ch="${hz}"></em>`;
         h.onclick = () => toggleAcc("h", hz);
@@ -981,7 +982,6 @@ function renderList(force){
       if (n % 8 === 1){ const j = qJuz(n), h = document.createElement("div"); h.className = "juzh jh" + (isReadU(j, "J") ? " done" : "");
         h.innerHTML = `<span>الجزء ${toAr(j)} <small>${juzRange(j)}</small></span><button data-j="${j}">اقرئي الجزء كاملًا</button>`;
         h.querySelector("button").onclick = () => openJuz(j); frag.appendChild(h); }
-      const h = document.createElement("div"); h.className = "hzh"; h.textContent = "الحزب " + toAr(qHizb(n)); frag.appendChild(h);
     }
     if (view === "p" && !raw && PJUZ[n-1] !== lastJuz){
       lastJuz = PJUZ[n-1];
@@ -993,9 +993,9 @@ function renderList(force){
     b.innerHTML = view === "s"
       ? `<span class="n">${toAr(n)}</span><span><div class="t">${label}</div><div class="a">${toAr(SURAH[n-1][1])} آية · ${pRange(...SRANGE[n])}</div></span>`
       : view === "p" ? `<span class="n">${toAr(n)}</span><span><div class="t">صفحة ${toAr(n)}</div><div class="a">${label} · ${toAr(pageAyat(n))} آية</div></span>`
-      : `<span class="n">${qK(n) === 0 ? toAr(qHizb(n)) : QSYM[qK(n)]}</span><span><div class="t">${qShort(n)}</div><div class="a">يبدأ: ${qStart(n)} · ${toAr(rubAyat(n))} آية</div></span>`;
+      : `<span class="n">${toAr(qIn(n))}</span><span><div class="t">${qShort(n)}</div><div class="a">يبدأ: ${qStart(n)} · ${toAr(rubAyat(n))} آية</div></span>`;
     b.onclick = () => tap(n);
-    if (acc){ b.dataset.j = qJuz(n); b.dataset.h = qHizb(n); b.hidden = !(openJ.has(qJuz(n)) && openH.has(qHizb(n))); }
+    if (acc){ b.dataset.j = qJuz(n); b.dataset.h = qHizb(n); b.hidden = !openJ.has(qJuz(n)); }
     listChips[n] = b;
     frag.appendChild(b); shown++;
   }
@@ -1020,7 +1020,7 @@ function toggleAcc(kind, v){
   let k = 0;
   grid.querySelectorAll(".acc").forEach(e => { if (e.dataset.aj) e.classList.toggle("open", openJ.has(+e.dataset.aj)); if (e.dataset.ah) e.classList.toggle("open", openH.has(+e.dataset.ah)); });
   grid.querySelectorAll(".hzh.acc").forEach(e => { const show = openJ.has(+e.dataset.j); if (show && e.hidden){ e.hidden = false; anim(e, k++); } else if (!show) e.hidden = true; });
-  for (const n in listChips){ const b = listChips[n], show = openJ.has(+b.dataset.j) && openH.has(+b.dataset.h);
+  for (const n in listChips){ const b = listChips[n], show = openJ.has(+b.dataset.j);
     if (show && b.hidden){ b.hidden = false; anim(b, k++); } else if (!show) b.hidden = true; }
   if (opening){ const t = grid.querySelector(kind === "j" ? `[data-aj="${v}"]` : `[data-ah="${v}"]`); t && setTimeout(() => t.scrollIntoView({behavior: "smooth", block: "nearest"}), 60); }
 }
