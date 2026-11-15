@@ -167,6 +167,17 @@ body.dark svg.heart.quarters .jzn{fill:#fff;opacity:.1}
 .juzh.jh button{border:0;background:linear-gradient(135deg,#e5383b,#8d0b16);color:#fff;font:inherit;font-size:12.5px;font-weight:700;border-radius:999px;padding:6px 12px;cursor:pointer}
 .juzh.jh.done span::after{content:" ✓";color:#16794f}
 .hzh{grid-column:1/-1;font-size:12.5px;font-weight:700;color:var(--gold);margin:6px 4px 0}
+.juzh.acc,.hzh.acc{cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+.juzh.acc .tg{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.acc .chev{font-style:normal;display:inline-block;transition:transform .3s cubic-bezier(.2,.8,.2,1);font-size:16px;line-height:1;color:var(--muted)}
+.acc.open > .chev,.acc.open .tg > .chev{transform:rotate(90deg);color:var(--red,#c1121f)}
+.acc .cnt{font-style:normal;font-size:11.5px;font-weight:700;color:var(--muted);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:1px 8px;margin-inline-start:4px}
+.acc .cnt.full{color:#fff;background:linear-gradient(135deg,#e5383b,#8d0b16);border-color:transparent}
+.hzh.acc{display:flex;align-items:center;gap:6px;padding:8px 10px;margin:4px 0 0;border-radius:12px;background:var(--card);border:1px solid var(--line);margin-inline-start:14px}
+.hzh.acc small{font-weight:500;color:var(--muted);font-size:11.5px}
+.hzh.acc.enter{animation:rise .35s calc(var(--k,0)*45ms) both}
+
+[hidden]{display:none!important}
 .juzh{grid-column:1/-1;font-weight:800;font-size:14px;color:var(--deep);margin:10px 2px 2px;padding-bottom:4px;border-bottom:1px dashed var(--line)}
 .chip.pg .t{font-size:15px}
 .chip.qq .t{font-size:14.5px;white-space:nowrap}
@@ -936,29 +947,41 @@ function renderList(force){
   const sig = view + "|" + filter + "|" + q.value.trim();
   if (!force && sig === listSig && filter === "all"){
     for (const n in listChips) listChips[n].classList.toggle("read", isReadU(+n));
-    if (view === "j") grid.querySelectorAll(".juzh.jh").forEach(h => h.classList.toggle("done", isReadU(+h.querySelector("button").dataset.j, "J")));
+    if (view === "j"){ grid.querySelectorAll(".juzh.jh").forEach(h => h.classList.toggle("done", isReadU(+h.querySelector("button").dataset.j, "J"))); accCounts(); }
     return;
   }
   listSig = sig; listChips = {};
   const items = [];   // render lazily in batches so long lists never block the page
   const raw = q.value.trim(), term = norm(raw), num = raw.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
   const frag = { appendChild: el => items.push(el) };
-  let shown = 0, lastJuz = 0;
+  let shown = 0, lastJuz = 0, lastH = 0;
+  const acc = view === "j" && !raw;   // juz → hizb → quarter, opened step by step
   for (let n = 1; n <= U().N; n++){
     const r = isReadU(n);
     if (filter === "read" && !r) continue;
     if (filter === "left" && r) continue;
     const label = view === "s" ? SURAH[n-1][0] : view === "p" ? pageSurahs(n) : RUB[n-1].map(([s]) => SURAH[s-1][0]).join(" ");
     if (raw && !listMatch(n, label, term, num)) continue;
-    if (view === "j" && qK(n) === 0 && n % 8 === 1){
-      const j = qJuz(n), h = document.createElement("div"); h.className = "juzh jh" + (isReadU(j, "J") ? " done" : "");
-      h.innerHTML = `<span>الجزء ${toAr(j)} <small>${juzRange(j)}</small></span><button data-j="${j}">اقرئي الجزء كاملًا</button>`;
-      h.querySelector("button").onclick = () => openJuz(j);
-      frag.appendChild(h);
-    }
-    if (view === "j" && qK(n) === 0){
-      const h = document.createElement("div"); h.className = "hzh"; h.textContent = "الحزب " + toAr(qHizb(n));
-      frag.appendChild(h);
+    if (acc){
+      const j = qJuz(n), hz = qHizb(n);
+      if (j !== lastJuz){ lastJuz = j;
+        const h = document.createElement("div"); h.className = "juzh jh acc" + (isReadU(j, "J") ? " done" : "") + (openJ.has(j) ? " open" : ""); h.dataset.aj = j;
+        h.innerHTML = `<span class="tg"><i class="chev">‹</i>الجزء ${toAr(j)} <small>${juzRange(j)}</small><em class="cnt" data-cj="${j}"></em></span><button data-j="${j}">اقرئي الجزء كاملًا</button>`;
+        h.querySelector("button").onclick = e => { e.stopPropagation(); openJuz(j); };
+        h.onclick = () => toggleAcc("j", j);
+        frag.appendChild(h);
+      }
+      if (hz !== lastH){ lastH = hz;
+        const h = document.createElement("div"); h.className = "hzh acc" + (openH.has(hz) ? " open" : ""); h.dataset.j = j; h.dataset.ah = hz; h.hidden = !openJ.has(j);
+        h.innerHTML = `<i class="chev">‹</i>الحزب ${toAr(hz)} <small>يبدأ: ${qStart(hz * 4 - 3)}</small><em class="cnt" data-ch="${hz}"></em>`;
+        h.onclick = () => toggleAcc("h", hz);
+        frag.appendChild(h);
+      }
+    } else if (view === "j" && qK(n) === 0){
+      if (n % 8 === 1){ const j = qJuz(n), h = document.createElement("div"); h.className = "juzh jh" + (isReadU(j, "J") ? " done" : "");
+        h.innerHTML = `<span>الجزء ${toAr(j)} <small>${juzRange(j)}</small></span><button data-j="${j}">اقرئي الجزء كاملًا</button>`;
+        h.querySelector("button").onclick = () => openJuz(j); frag.appendChild(h); }
+      const h = document.createElement("div"); h.className = "hzh"; h.textContent = "الحزب " + toAr(qHizb(n)); frag.appendChild(h);
     }
     if (view === "p" && !raw && PJUZ[n-1] !== lastJuz){
       lastJuz = PJUZ[n-1];
@@ -972,14 +995,36 @@ function renderList(force){
       : view === "p" ? `<span class="n">${toAr(n)}</span><span><div class="t">صفحة ${toAr(n)}</div><div class="a">${label} · ${toAr(pageAyat(n))} آية</div></span>`
       : `<span class="n">${qK(n) === 0 ? toAr(qHizb(n)) : QSYM[qK(n)]}</span><span><div class="t">${qShort(n)}</div><div class="a">يبدأ: ${qStart(n)} · ${toAr(rubAyat(n))} آية</div></span>`;
     b.onclick = () => tap(n);
+    if (acc){ b.dataset.j = qJuz(n); b.dataset.h = qHizb(n); b.hidden = !(openJ.has(qJuz(n)) && openH.has(qHizb(n))); }
     listChips[n] = b;
     frag.appendChild(b); shown++;
   }
   grid.innerHTML = "";
-  listItems = items; listPos = 0; moreList();
+  listItems = items; listPos = 0;
+  if (acc){ listPos = items.length; grid.append(...items); listMore.remove(); accCounts(); } else moreList();
   if (!shown) grid.innerHTML = `<div class="empty">${filter==="left" ? "ما شاء الله، أتممتِ " + U().all + " ♥" : "لا توجد نتائج"}</div>`;
 }
 q.addEventListener("input", renderList);
+/* juz view: tap a juz to show its two hizbs, tap a hizb to show its four quarters */
+const openJ = new Set(), openH = new Set();
+function accCounts(){
+  grid.querySelectorAll("[data-cj]").forEach(e => { const j = +e.dataset.cj, c = juzQuarters(j).filter(x => isReadU(x)).length; e.textContent = toAr(c) + "/٨"; e.classList.toggle("full", c === 8); });
+  grid.querySelectorAll("[data-ch]").forEach(e => { const h = +e.dataset.ch, c = [1,2,3,4].filter(k => isReadU(h * 4 - 4 + k)).length; e.textContent = toAr(c) + "/٤"; e.classList.toggle("full", c === 4); });
+}
+function toggleAcc(kind, v){
+  const set = kind === "j" ? openJ : openH, opening = !set.has(v);
+  opening ? set.add(v) : set.delete(v);
+  if (kind === "j" && !opening) [v * 2 - 1, v * 2].forEach(h => openH.delete(h));
+  if (kind === "j" && opening && !openH.has(v * 2 - 1) && !openH.has(v * 2)){   // open the first hizb that is not finished
+    const h = [v * 2 - 1, v * 2].find(h => [1,2,3,4].some(k => !isReadU(h * 4 - 4 + k))) || v * 2 - 1; openH.add(h); }
+  let k = 0;
+  grid.querySelectorAll(".acc").forEach(e => { if (e.dataset.aj) e.classList.toggle("open", openJ.has(+e.dataset.aj)); if (e.dataset.ah) e.classList.toggle("open", openH.has(+e.dataset.ah)); });
+  grid.querySelectorAll(".hzh.acc").forEach(e => { const show = openJ.has(+e.dataset.j); if (show && e.hidden){ e.hidden = false; anim(e, k++); } else if (!show) e.hidden = true; });
+  for (const n in listChips){ const b = listChips[n], show = openJ.has(+b.dataset.j) && openH.has(+b.dataset.h);
+    if (show && b.hidden){ b.hidden = false; anim(b, k++); } else if (!show) b.hidden = true; }
+  if (opening){ const t = grid.querySelector(kind === "j" ? `[data-aj="${v}"]` : `[data-ah="${v}"]`); t && setTimeout(() => t.scrollIntoView({behavior: "smooth", block: "nearest"}), 60); }
+}
+function anim(el, k){ el.classList.remove("enter"); void el.offsetWidth; el.classList.add("enter"); el.style.setProperty("--k", k); el.addEventListener("animationend", () => el.classList.remove("enter"), {once: true}); }
 document.getElementById("tabs").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
   filter = b.dataset.f;
