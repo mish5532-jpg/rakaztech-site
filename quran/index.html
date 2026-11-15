@@ -259,6 +259,8 @@ body.dark svg.heart path[stroke="#b9b1aa"]{opacity:.25}
 
 body.dark .play{background:linear-gradient(135deg,#e5383b,#8d0b16);color:#fff}
 
+.who.cl.ok{color:#2e7d4f;border-color:#2e7d4f55}.who.cl.err{color:var(--red,#c1121f);border-color:currentColor}
+.pinin{letter-spacing:.5em;text-align:center;font-size:22px;direction:ltr}
 .who{border:1px solid var(--line);background:var(--card);color:var(--muted);font:inherit;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;margin-inline-start:6px;cursor:pointer;vertical-align:1px}
 .storewarn{max-width:520px;margin:10px auto 0;background:#fff4e5;border:1px solid #f3c98b;color:#7a4a00;border-radius:12px;padding:8px 12px;font-size:13px}
 .searchbox{position:relative;max-width:560px;margin:16px auto 0;z-index:5}
@@ -501,7 +503,7 @@ body.dark .viewseg .pill{background:#2a2220}
   <header>
     <div class="basmala">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
     <h1>قلب <span>القرآن</span></h1>
-    <div class="owner">ختمة <b id="ownerName">فاطمة محمد البساتنة</b> <button class="who" id="whoBtn" aria-label="تغيير المستخدم">تغيير المستخدم ⇄</button></div>
+    <div class="owner">ختمة <b id="ownerName">فاطمة محمد البساتنة</b> <button class="who" id="whoBtn" aria-label="تغيير المستخدم">تغيير المستخدم ⇄</button> <button class="who cl" id="cloudSt" hidden></button></div>
     <div class="storewarn" id="storeWarn" hidden>تنبيه: هذا المتصفح لا يحفظ التقدم. افتحي الصفحة من Safari أو Chrome مباشرة، أو انسخي «رمز التقدم» من أسفل الصفحة.</div>
   </header>
 
@@ -694,7 +696,8 @@ const IDB = (() => { let p; return () => p || (p = new Promise((res, rej) => { t
   r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); } catch(e){ rej(e); } })); })();
 const snapLS = () => { const o = {}; try { for (let i = 0; i < store.length; i++){ const k = store.key(i); if (k.startsWith("quranHeart.")) o[k] = store.getItem(k); } } catch(e){} return o; };
 let mirT; const mirror = () => { clearTimeout(mirT); mirT = setTimeout(() => IDB().then(db => { const t = db.transaction("kv", "readwrite"); t.objectStore("kv").put({t: Date.now(), data: snapLS()}, "all"); }).catch(() => {}), 400); };
-const save = () => { state.saved = Date.now(); ls.set(KEY, JSON.stringify(state)); mirror(); };
+let onSaved = () => {};
+const save = (quiet) => { state.saved = Date.now(); ls.set(KEY, JSON.stringify(state)); mirror(); if (!quiet) onSaved(); };
 try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch(e){}
 const idbBackup = () => IDB().then(db => new Promise(res => { const r = db.transaction("kv").objectStore("kv").get("all"); r.onsuccess = () => res(r.result); r.onerror = () => res(null); })).catch(() => null);
 let view = ["s", "p", "j"].includes(state.view) ? state.view : "s";
@@ -1662,18 +1665,112 @@ function switchUser(name){
   ["pread", "jread", "qread", "pos"].forEach(k => { if (!state[k]) state[k] = {}; });
   view = ["s", "p", "j"].includes(state.view) ? state.view : "s";
   shownCount = 0; shownAyat = 0; listSig = "";
-  save(); ownerUI(); applyTheme(); buildCells(); viewUI(); update();
+  save(true); ownerUI(); applyTheme(); buildCells(); viewUI(); update();
   toast("أهلًا " + me.split(" ")[0], "تقدّمكِ محفوظ باسمكِ");
+  cloudStart();
 }
 document.getElementById("whoBtn").onclick = () => {
   openSheet(`<div class="big" style="font-size:26px">من يقرأ الآن؟</div><p>كل اسم يحفظ قراءته وتقدّمه وحده</p>
     <div class="recs">${profiles.map(p => `<button data-u="${p.replace(/"/g, "&quot;")}" class="${p === me ? "on" : ""}">${p}</button>`).join("")}</div>
     <input class="search uname" id="newUser" placeholder="أو اكتبي اسمًا جديدًا…" maxlength="40" style="width:100%;margin:14px 0 10px">
-    <div class="row"><button class="btn red" id="addUser">حفظ الاسم</button><button class="btn ghost" id="cUser">إغلاق</button></div>`);
+    <div class="row"><button class="btn red" id="addUser">حفظ الاسم</button><button class="btn ghost" id="cUser">إغلاق</button></div>
+    <div class="dua" style="margin-top:18px;text-align:center"><b>☁︎ الحفظ على الإنترنت</b>${cloud ? `قراءة «${me}» محفوظة على الإنترنت، وتظهر في أي جهاز عند الدخول بالاسم نفسه والرقم السري.<div class="row" style="margin-top:10px"><button class="btn ghost" id="cOff">إيقاف على هذا الجهاز</button></div>`
+      : `اختاري رقمًا سريًا من ٤ أرقام لاسم «${me}». إن كان الاسم محفوظًا من قبل فاكتبي رقمه نفسه لتظهر قراءتك هنا.
+      <input class="search pinin" id="pinIn" inputmode="numeric" maxlength="8" placeholder="••••" style="width:100%;margin:10px 0">
+      <div class="row"><button class="btn red" id="cOn">تفعيل الحفظ</button></div><p id="cMsg" style="margin:8px 0 0"></p>`}</div>`);
+  const cOn = document.getElementById("cOn"), cOff = document.getElementById("cOff");
+  if (cOff) cOff.onclick = () => { cloud = null; ls.set(cloudKey(), ""); cloudUI(); closeSheet(); };
+  if (cOn) cOn.onclick = async () => {
+    const pin = toEn(document.getElementById("pinIn").value).replace(/\D/g, ""), msg = document.getElementById("cMsg");
+    if (pin.length < 4){ msg.textContent = "الرقم السري ٤ أرقام على الأقل"; return; }
+    msg.textContent = "جارٍ الاتصال…"; cOn.disabled = true;
+    const r = await cloudConnect(pin); cOn.disabled = false;
+    if (r === "ok"){ closeSheet(); toast("تم ✓", "قراءتكِ محفوظة على الإنترنت"); }
+    else msg.textContent = r;
+  };
   sheet.querySelectorAll("[data-u]").forEach(b => b.onclick = () => { closeSheet(); if (b.dataset.u !== me) switchUser(b.dataset.u); });
   document.getElementById("addUser").onclick = () => { const v = document.getElementById("newUser").value; if (v.trim()){ closeSheet(); switchUser(v); } };
   document.getElementById("cUser").onclick = closeSheet;
 };
+
+
+/* ---------- cloud save (name + PIN) so progress follows her to any device / browser ---------- */
+const SYNC = "https://quran-heart-sync.rakaztech.workers.dev";
+const toEn = s => String(s).replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d));
+const cloudKey = () => "quranHeart.cloud." + me;
+let cloud = null; const loadCloud = () => { try { cloud = JSON.parse(ls.get(cloudKey()) || "null"); } catch(e){ cloud = null; } };
+const keepCloud = () => ls.set(cloudKey(), cloud ? JSON.stringify(cloud) : "");
+const cloudSt = document.getElementById("cloudSt");
+function cloudUI(st){
+  cloudSt.hidden = false; cloudSt.className = "who cl" + (cloud ? (st === "err" ? " err" : st === "busy" ? "" : " ok") : "");
+  cloudSt.textContent = !cloud ? "☁︎ احفظي على الإنترنت" : st === "err" ? "☁︎ غير متصل" : st === "busy" ? "☁︎ يحفظ…" : "☁︎ محفوظ";
+}
+cloudSt.onclick = () => document.getElementById("whoBtn").click();
+async function api(path, body){
+  const r = await fetch(SYNC + path, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+  let j = {}; try { j = await r.json(); } catch(e){}
+  return {status: r.status, ...j};
+}
+function mergeState(a, b){   // a = this device, b = cloud; reading marks are united, never dropped
+  const o = Object.assign({}, b, a);
+  ["read", "pread", "jread", "qread", "pos"].forEach(k => o[k] = Object.assign({}, b[k] || {}, a[k] || {}));
+  const seen = new Set();
+  o.log = [...(b.log || []), ...(a.log || [])].filter(e => { const k = JSON.stringify([e.n, e.p, e.q, e.j, e.t]); if (seen.has(k)) return false; seen.add(k); return true; }).sort((x, y) => x.t - y.t);
+  o.khList = [...new Set([...(b.khList || []), ...(a.khList || [])])].sort((x, y) => x - y);
+  o.khatmas = Math.max(a.khatmas || 0, b.khatmas || 0);
+  return o;
+}
+function adopt(s){
+  state = s && typeof s === "object" ? s : {read:{}, khatmas:0};
+  if (!state.read) state.read = {};
+  ["log", "khList"].forEach(k => { if (!Array.isArray(state[k])) state[k] = []; });
+  ["pread", "jread", "qread", "pos"].forEach(k => { if (!state[k]) state[k] = {}; });
+  view = ["s", "p", "j"].includes(state.view) ? state.view : view;
+  shownCount = 0; shownAyat = 0; listSig = "";
+  save(true); applyTheme(); buildCells(); viewUI(); update();
+}
+let pushT, pushing = false;
+async function push(){
+  if (!cloud || pushing) return; pushing = true; cloudUI("busy");
+  try {
+    for (let i = 0; i < 3; i++){
+      const r = await api("/save", {name: me, pin: cloud.pin, base: cloud.base || 0, data: state});
+      if (r.status === 200){ cloud.base = r.t; cloud.dirty = false; keepCloud(); cloudUI(); break; }
+      if (r.status === 409){ cloud.base = r.t; adopt(mergeState(state, r.data || {})); continue; }
+      if (r.status === 403 || r.status === 429){ cloud = null; keepCloud(); cloudUI(); toast("الحفظ على الإنترنت توقّف", "ادخلي الرقم السري من «تغيير المستخدم»"); break; }
+      cloudUI("err"); break;
+    }
+  } catch(e){ cloudUI("err"); }
+  pushing = false;
+}
+async function pull(){
+  if (!cloud) return;
+  try {
+    const r = await api("/load", {name: me, pin: cloud.pin});
+    if (r.status === 403 || r.status === 429){ cloud = null; keepCloud(); cloudUI(); return; }
+    if (r.status !== 200){ cloudUI("err"); return; }
+    if (r.t && r.t !== cloud.base){
+      adopt(cloud.dirty ? mergeState(state, r.data || {}) : mergeState({view: state.view, theme: state.theme}, r.data || {}));
+      cloud.base = r.t; keepCloud();
+    }
+    if (cloud.dirty || !r.t) push(); else cloudUI();
+  } catch(e){ cloudUI("err"); }
+}
+async function cloudConnect(pin){
+  try {
+    const r = await api("/load", {name: me, pin});
+    if (r.status === 403) return "الرقم السري غير صحيح لهذا الاسم" + (r.left ? " (بقي " + toAr(r.left) + " محاولات)" : "");
+    if (r.status === 429) return "محاولات كثيرة، جرّبي بعد ربع ساعة";
+    if (r.status !== 200) return "تعذّر الاتصال، تأكدي من الإنترنت";
+    cloud = {pin, base: r.t || 0, dirty: true}; keepCloud();
+    if (r.t) adopt(mergeState(state, r.data || {}));
+    await push(); return cloud ? "ok" : "تعذّر الحفظ";
+  } catch(e){ return "تعذّر الاتصال، تأكدي من الإنترنت"; }
+}
+function cloudStart(){ loadCloud(); cloudUI(); if (cloud) pull(); }
+onSaved = () => { if (!cloud) return; cloud.dirty = true; keepCloud(); clearTimeout(pushT); pushT = setTimeout(push, 1500); };
+document.addEventListener("visibilitychange", () => { if (document.hidden){ if (cloud && cloud.dirty){ clearTimeout(pushT); push(); } } else pull(); });
+addEventListener("online", () => cloud && (cloud.dirty ? push() : pull()));
 
 /* ---------- search: surah, page, juz or ayah text ---------- */
 const sq = document.getElementById("sq"), sres = document.getElementById("sres");
@@ -1770,6 +1867,7 @@ document.getElementById("resetBtn").onclick = () => {
 
 ownerUI(); buildCells(); viewUI();
 update();
+cloudStart();
 /* if the browser dropped localStorage but the IndexedDB copy survived, bring it back; otherwise warn on a fresh browser */
 idbBackup().then(bk => {
   const has = bk && bk.data && bk.data["quranHeart.profiles"];
@@ -1777,9 +1875,10 @@ idbBackup().then(bk => {
   if (!FRESH) mirror();
   if (FRESH && !has && !state.log.length) setTimeout(() => {
     openSheet(`<div class="big" style="font-size:24px">لا يوجد تقدّم محفوظ هنا</div>
-      <p>كل متصفح على الجهاز يحفظ قراءته وحده: سفاري، وأيقونة الشاشة الرئيسية، والروابط التي تُفتح من داخل واتساب. إن كنتِ قرأتِ من قبل من مكان آخر فافتحي القلب من هناك، واضغطي «نقل التقدم»، وانسخي الرمز والصقيه هنا.</p>
+      <p>إن كنتِ فعّلتِ الحفظ على الإنترنت فادخلي باسمكِ ورقمكِ السري. وإلا فاعلمي أن كل متصفح على الجهاز يحفظ قراءته وحده: سفاري، وأيقونة الشاشة الرئيسية، والروابط التي تُفتح من داخل واتساب. إن كنتِ قرأتِ من قبل من مكان آخر فافتحي القلب من هناك، واضغطي «نقل التقدم»، وانسخي الرمز والصقيه هنا.</p>
       <p style="font-size:14px;color:var(--muted)">ننصح دائمًا بفتح القلب من الأيقونة نفسها كل مرة.</p>
-      <div class="row"><button class="btn red" id="fPaste">لديّ رمز تقدّم</button><button class="btn ghost" id="fNew">أبدأ من جديد</button></div>`);
+      <div class="row"><button class="btn red" id="fCloud">دخول بالاسم والرقم السري</button><button class="btn soft" id="fPaste">لديّ رمز تقدّم</button><button class="btn ghost" id="fNew">أبدأ من جديد</button></div>`);
+    document.getElementById("fCloud").onclick = () => { closeSheet(); setTimeout(() => document.getElementById("whoBtn").click(), 350); };
     document.getElementById("fNew").onclick = closeSheet;
     document.getElementById("fPaste").onclick = () => { closeSheet(); setTimeout(() => document.getElementById("syncBtn").click(), 350); };
   }, 1400);
