@@ -270,6 +270,9 @@ body.dark svg.heart path[stroke="#b9b1aa"]{opacity:.25}
 
 body.dark .play{background:linear-gradient(135deg,#e5383b,#8d0b16);color:#fff}
 
+.who.cl.nag{color:#fff;background:linear-gradient(135deg,#e5383b,#8d0b16);border-color:transparent;animation:nag 2.4s ease-in-out infinite}
+@keyframes nag{0%,100%{box-shadow:0 0 0 0 rgba(229,56,59,.45)}50%{box-shadow:0 0 0 6px rgba(229,56,59,0)}}
+@media (prefers-reduced-motion:reduce){.who.cl.nag{animation:none}}
 .who.cl.ok{color:#2e7d4f;border-color:#2e7d4f55}.who.cl.err{color:var(--red,#c1121f);border-color:currentColor}
 .pinin{letter-spacing:.5em;text-align:center;font-size:22px;direction:ltr}
 .who{border:1px solid var(--line);background:var(--card);color:var(--muted);font:inherit;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;margin-inline-start:6px;cursor:pointer;vertical-align:1px}
@@ -883,7 +886,7 @@ function viewUI(){
   [...viewSeg.children].forEach(b => b.classList.toggle("on", b.dataset.v === view));
   document.getElementById("sLbl").textContent = U().noun + " من " + toAr(U().N);
   document.getElementById("listTitle").textContent = ({s: "السور", p: "الصفحات", j: "الأجزاء"})[view];
-  q.placeholder = ({s: "ابحثي عن سورة…", p: "ابحثي برقم الصفحة أو اسم السورة…", j: "ابحثي: جزء ٣ · حزب ٥ · ربع ١٢ · البقرة ٥٠"})[view];
+  q.placeholder = ({s: "ابحثي عن سورة…", p: "ابحثي برقم الصفحة أو اسم السورة…", j: "ابحثي: جزء ٣ · جزء ٥ ربع ٢ · البقرة ٥٠"})[view];
   document.getElementById("legRead").textContent = "قُرئت";
 }
 viewSeg.addEventListener("click", e => {
@@ -935,6 +938,7 @@ function listMatch(n, label, term, num){
     if (d && view === "p"){ const nm = words.replace(/^(سوره|صفحه)\s*/, ""); return norm(label).includes(nm) && PAGES[n-1].some(([s, a, b]) => norm(SURAH[s-1][0]).includes(nm) && k >= a && k <= b); }
     return norm(label).includes(term.replace(/^(سوره|صفحه)\s*/, ""));
   }
+  { const m = num.match(/(\d+)\D+(\d+)/); if (m && /جزء/.test(words) && /ربع/.test(words)) return n === (+m[1] - 1) * 8 + +m[2]; }
   if (/ربع|ارباع/.test(words) && !/حزب/.test(words)) return k ? n === k : qK(n) === 1;
   if (/نصف/.test(words)) return k ? qHizb(n) === k && qK(n) === 2 : qK(n) === 2;
   if (/ثلاث/.test(words)) return k ? qHizb(n) === k && qK(n) === 3 : qK(n) === 3;
@@ -1553,8 +1557,8 @@ function renderWhere(){
   let next = null;
   const start = last ? logId(last) : 0;
   for (let k = 1; k <= N; k++){ const c = ((start + k - 1) % N) + 1; if (!isReadU(c)) { next = c; break; } }
-  const nm = k => view === "s" ? "سورة " + SURAH[k-1][0] : view === "p" ? "صفحة " + toAr(k) : "الجزء " + toAr(k);
-  const sh = k => view === "s" ? SURAH[k-1][0] : view === "p" ? "صفحة " + toAr(k) : "الجزء " + toAr(k);
+  const nm = k => view === "s" ? "سورة " + SURAH[k-1][0] : view === "p" ? "صفحة " + toAr(k) : qName(k);
+  const sh = k => view === "s" ? SURAH[k-1][0] : view === "p" ? "صفحة " + toAr(k) : qName(k);
   const today = HFULL.format(new Date());
   if (!last){
     box.innerHTML = `<div class="wt"><small>${today}</small><b>بسم الله، لنبدأ</b><span>ابدئي من ${({s: "سورة الفاتحة", p: "الصفحة الأولى", j: "الجزء الأول"})[view]}</span></div>
@@ -1747,7 +1751,7 @@ let cloud = null; const loadCloud = () => { try { cloud = JSON.parse(ls.get(clou
 const keepCloud = () => ls.set(cloudKey(), cloud ? JSON.stringify(cloud) : "");
 const cloudSt = document.getElementById("cloudSt");
 function cloudUI(st){
-  cloudSt.hidden = false; cloudSt.className = "who cl" + (cloud ? (st === "err" ? " err" : st === "busy" ? "" : " ok") : "");
+  cloudSt.hidden = false; cloudSt.className = "who cl" + (cloud ? (st === "err" ? " err" : st === "busy" ? "" : " ok") : (state.log.length ? " nag" : ""));
   cloudSt.textContent = !cloud ? "☁︎ احفظي على الإنترنت" : st === "err" ? "☁︎ غير متصل" : st === "busy" ? "☁︎ يحفظ…" : "☁︎ محفوظ";
 }
 cloudSt.onclick = () => document.getElementById("whoBtn").click();
@@ -1813,7 +1817,10 @@ async function cloudConnect(pin){
   } catch(e){ return "تعذّر الاتصال، تأكدي من الإنترنت"; }
 }
 function cloudStart(){ loadCloud(); cloudUI(); if (cloud) pull(); }
-onSaved = () => { if (!cloud) return; cloud.dirty = true; keepCloud(); clearTimeout(pushT); pushT = setTimeout(push, 1500); };
+let nagDay = ls.get("quranHeart.nag") || "";
+onSaved = () => { if (!cloud){ cloudUI(); const d = new Date().toDateString();
+    if (state.log.length && nagDay !== d){ nagDay = d; ls.set("quranHeart.nag", d); setTimeout(() => toast("احفظي قراءتكِ على الإنترنت", "اضغطي الزر الأحمر بجانب اسمكِ واختاري رقمًا سريًا"), 2600); }
+    return; } cloud.dirty = true; keepCloud(); clearTimeout(pushT); pushT = setTimeout(push, 1500); };
 document.addEventListener("visibilitychange", () => { if (document.hidden){ if (cloud && cloud.dirty){ clearTimeout(pushT); push(); } } else pull(); });
 addEventListener("online", () => cloud && (cloud.dirty ? push() : pull()));
 
@@ -1834,6 +1841,11 @@ async function runSearch(){
   const num = +raw.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[^\d]/g, "");
   const term = norm(plain(raw)).replace(/^(سوره|صفحه|الصفحه|جزء|الجزء|ايه|الايه)\s*/, "");
   const kw = norm(plain(raw));
+  { const en = toEn(raw), m = en.match(/(\d+)\D+(\d+)/);
+    if (m && /جزء/.test(kw) && /ربع/.test(kw)){   // "الجزء ٥ الربع ٣" → quarter 3 of juz 5 (quarters are numbered 1–8 inside each juz)
+      const j = +m[1], k = +m[2];
+      if (j >= 1 && j <= 30 && k >= 1 && k <= 8){ const qn = (j - 1) * 8 + k;
+        sres.appendChild(hit("jz", qName(qn), "يبدأ: " + qStart(qn) + " · " + toAr(rubAyat(qn)) + " آية", () => openQuarter(qn))); sres.classList.add("on"); return; } } }
   if (num && /ربع|حزب|نصف|ثلاث/.test(kw)){   // "ربع ١٢" / "حزب ٥" → straight to that part
     const qn = /حزب/.test(kw) ? num * 4 - 3 + (/نصف/.test(kw) ? 2 : /ثلاث/.test(kw) ? 3 : /ربع/.test(kw) ? 1 : 0) : num;
     if (qn >= 1 && qn <= 240){ sres.appendChild(hit("jz", qName(qn), "يبدأ: " + qStart(qn) + " · " + toAr(rubAyat(qn)) + " آية", () => openQuarter(qn))); sres.classList.add("on"); return; }
